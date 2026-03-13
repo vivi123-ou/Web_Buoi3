@@ -24,4 +24,8 @@ public class Order {
 
     @OneToMany(mappedBy = "orders", cascade = CascadeType.ALL)
     private List<OrderDetail> orderDetails;
+
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
 }

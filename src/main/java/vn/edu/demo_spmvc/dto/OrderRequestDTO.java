@@ -3,7 +3,6 @@ package vn.edu.demo_spmvc.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
-
 import java.util.List;
 
 @Data
@@ -12,6 +11,8 @@ public class OrderRequestDTO {
     private String customerName;
 
     @NotEmpty
-    private
-    List<OrderDetailDTO> item;
+    private List<OrderDetailDTO> item;
+
+    private String voucherCode;
+    private Long customerId;
 }
