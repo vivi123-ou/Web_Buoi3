@@ -10,10 +10,11 @@ public class ProductMapper {
 
     public static Product toEntity(ProductDTO dto) {
         return Product.builder()
-                .id(dto.getId())
                 .name(dto.getName())
                 .price(dto.getPrice())
                 .quantity(dto.getQuantity())
+                // KHÔNG set id, KHÔNG set version
+                // Để Hibernate tự quản lý
                 .build();
     }
 }

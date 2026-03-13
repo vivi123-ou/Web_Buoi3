@@ -6,6 +6,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.edu.demo_spmvc.dto.AuthResponseDTO;
 import vn.edu.demo_spmvc.dto.LoginDTO;
 import vn.edu.demo_spmvc.dto.RegisterDTO;
 import vn.edu.demo_spmvc.entity.AppUser;
