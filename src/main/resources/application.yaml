@@ -3,12 +3,10 @@ spring:
     url: jdbc:mysql://localhost:3306/mydb
     username: root
     password: "@123Mysql"
-
-    jpa:
-      hibenate:
-        ddl-auto: update
-      show-sql: true
-      properties:
-        hibenate:
-          format_slq: true
-
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
