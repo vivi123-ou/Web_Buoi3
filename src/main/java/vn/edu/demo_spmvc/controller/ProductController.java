@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.demo_spmvc.dto.PageResponseDTO;
 import vn.edu.demo_spmvc.dto.ProductDTO;
@@ -15,21 +16,30 @@ import java.util.List;
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
 public class ProductController {
-    private final ProductService service;
+
+    private final ProductService productService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ProductDTO create(@Valid @RequestBody ProductDTO dto) {
-        return service.create(dto);
+        return productService.create(dto);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ProductDTO update(@PathVariable Long id, @Valid @RequestBody ProductDTO dto) {
+        return productService.update(id, dto);
     }
 
     @GetMapping
     public List<ProductDTO> getAll() {
-        return service.getAll();
+        return productService.getAll();
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public void delete(@PathVariable Long id) {
-        service.delete(id);
+        productService.delete(id);
     }
 
     @GetMapping("/search")
@@ -39,9 +49,9 @@ public class ProductController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String sort) {
 
-        String[] sortParts = sort.split(",");
-        Sort.Direction dir = sortParts.length > 1 && sortParts[1].equalsIgnoreCase("desc")
+        String[] parts = sort.split(",");
+        Sort.Direction dir = parts.length > 1 && parts[1].equalsIgnoreCase("desc")
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
-        return service.search(criteria, PageRequest.of(page, size, Sort.by(dir, sortParts[0])));
+        return productService.search(criteria, PageRequest.of(page, size, Sort.by(dir, parts[0])));
     }
 }

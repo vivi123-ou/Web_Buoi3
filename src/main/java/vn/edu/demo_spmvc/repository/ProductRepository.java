@@ -8,10 +8,13 @@ import org.springframework.data.repository.query.Param;
 import vn.edu.demo_spmvc.entity.Product;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByDeletedFalse();
+
+    Optional<Product> findByIdAndDeletedFalse(Long id);
 
     @Query("""
         SELECT p FROM Product p

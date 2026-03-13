@@ -10,3 +10,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+jwt:
+  secret: ThisIsASecretKeyForJWTThatMustBe32BytesLong!
+  expiration: 86400000

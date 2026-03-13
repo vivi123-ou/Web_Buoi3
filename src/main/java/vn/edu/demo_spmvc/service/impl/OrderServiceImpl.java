@@ -28,22 +28,23 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponseDTO createOrder(OrderRequestDTO request) {
 
-        // 1. Gộp product trùng
+        // 1. Gộp sản phẩm trùng trong cùng request
         Map<Long, Integer> merged = new HashMap<>();
         for (OrderDetailDTO item : request.getItem()) {
             merged.merge(item.getProductId(), item.getQuantity(), Integer::sum);
         }
 
         // 2. Khởi tạo Order
-        Order order = new Order();
-        order.setCustomerName(request.getCustomerName());
-        order.setOrderDate(LocalDateTime.now());
-        order.setStatus(OrderStatus.PENDING);
+        Order order = Order.builder()
+                .customerName(request.getCustomerName())
+                .orderDate(LocalDateTime.now())
+                .status(OrderStatus.PENDING)
+                .build();
 
         // 3. Gắn Customer nếu có
         if (request.getCustomerId() != null) {
             Customer customer = customerRepository.findById(request.getCustomerId())
-                    .orElseThrow(() -> new RuntimeException("Customer not found"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng id: " + request.getCustomerId()));
             order.setCustomer(customer);
         }
 
@@ -52,14 +53,16 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal total = BigDecimal.ZERO;
 
         for (Map.Entry<Long, Integer> entry : merged.entrySet()) {
-            Product product = productRepository.findById(entry.getKey())
-                    .orElseThrow(() -> new RuntimeException("Product not found: " + entry.getKey()));
+            Product product = productRepository.findByIdAndDeletedFalse(entry.getKey())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm id: " + entry.getKey()));
 
             if (product.getQuantity() < entry.getValue()) {
-                throw new RuntimeException("Not enough stock for: " + product.getName());
+                throw new RuntimeException("Sản phẩm '" + product.getName()
+                        + "' không đủ tồn kho. Còn: " + product.getQuantity());
             }
 
-            BigDecimal subTotal = product.getPrice().multiply(BigDecimal.valueOf(entry.getValue()));
+            BigDecimal subTotal = product.getPrice()
+                    .multiply(BigDecimal.valueOf(entry.getValue()));
 
             OrderDetail detail = OrderDetail.builder()
                     .orders(order)
@@ -100,29 +103,27 @@ public class OrderServiceImpl implements OrderService {
             }
 
             voucher.setUsed(true);
-            voucherRepository.save(voucher);
         }
 
-        // 6. Lưu Order
+        // 6. Lưu Order và OrderDetail cùng transaction
         order.setTotalAmount(total);
         order.setOrderDetails(details);
-        return toResponseDTO(orderRepository.save(order));
+        return toDTO(orderRepository.save(order));
     }
 
     @Override
     public OrderResponseDTO updateStatus(Long id, OrderStatus status) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+        Order order = findById(id);
         order.setStatus(status);
-        return toResponseDTO(orderRepository.save(order));
+        return toDTO(orderRepository.save(order));
     }
 
     @Override
     public OrderResponseDTO cancel(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+        Order order = findById(id);
 
-        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.COMPLETED) {
+        if (order.getStatus() == OrderStatus.PAID
+                || order.getStatus() == OrderStatus.COMPLETED) {
             throw new RuntimeException("Không thể hủy đơn hàng đã thanh toán hoặc hoàn thành");
         }
 
@@ -133,15 +134,28 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setStatus(OrderStatus.CANCELLED);
-        return toResponseDTO(orderRepository.save(order));
+        return toDTO(orderRepository.save(order));
     }
 
-    private OrderResponseDTO toResponseDTO(Order o) {
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderResponseDTO> getOrdersByCustomer(Long customerId) {
+        return orderRepository.findByCustomerId(customerId)
+                .stream().map(this::toDTO).toList();
+    }
+
+    private Order findById(Long id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng id: " + id));
+    }
+
+    private OrderResponseDTO toDTO(Order o) {
         return OrderResponseDTO.builder()
                 .id(o.getId())
                 .customerName(o.getCustomerName())
                 .orderDate(o.getOrderDate())
                 .totalAmount(o.getTotalAmount())
+                .status(o.getStatus())
                 .build();
     }
 }

@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface ProductService {
     ProductDTO create(ProductDTO dto);
+    ProductDTO update(Long id, ProductDTO dto);
     List<ProductDTO> getAll();
     void delete(Long id);
     PageResponseDTO<ProductDTO> search(ProductSearchDTO criteria, Pageable pageable);

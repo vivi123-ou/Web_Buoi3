@@ -1,13 +1,15 @@
 package vn.edu.demo_spmvc.dto;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-import java.math.BigDecimal;
 @Data
 public class OrderDetailDTO {
-    @NotNull
+    @NotNull(message = "ProductId không được để trống")
     private Long productId;
-    @NotNull
+
+    @NotNull(message = "Số lượng không được để trống")
+    @Min(value = 1, message = "Số lượng phải >= 1")
     private Integer quantity;
 }

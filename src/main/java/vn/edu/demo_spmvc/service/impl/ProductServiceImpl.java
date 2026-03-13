@@ -4,29 +4,45 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.edu.demo_spmvc.dto.PageResponseDTO;
 import vn.edu.demo_spmvc.dto.ProductDTO;
 import vn.edu.demo_spmvc.dto.ProductSearchDTO;
 import vn.edu.demo_spmvc.entity.Product;
 import vn.edu.demo_spmvc.mapper.ProductMapper;
+import vn.edu.demo_spmvc.repository.OrderDetailRepository;
 import vn.edu.demo_spmvc.repository.ProductRepository;
 import vn.edu.demo_spmvc.service.ProductService;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ProductServiceImpl implements ProductService {
-    private final ProductRepository repository;
+
+    private final ProductRepository productRepository;
+    private final OrderDetailRepository orderDetailRepository;
 
     @Override
     public ProductDTO create(ProductDTO dto) {
         Product product = ProductMapper.toEntity(dto);
-        return ProductMapper.toDTO(repository.save(product));
+        return ProductMapper.toDTO(productRepository.save(product));
     }
 
     @Override
+    public ProductDTO update(Long id, ProductDTO dto) {
+        Product product = productRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm id: " + id));
+        product.setName(dto.getName());
+        product.setPrice(dto.getPrice());
+        product.setQuantity(dto.getQuantity());
+        return ProductMapper.toDTO(productRepository.save(product));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ProductDTO> getAll() {
-        return repository.findByDeletedFalse()
+        return productRepository.findByDeletedFalse()
                 .stream()
                 .map(ProductMapper::toDTO)
                 .toList();
@@ -34,19 +50,23 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void delete(Long id) {
-        Product p = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
-        boolean hasOrder = p.getOrderDetails() != null && !p.getOrderDetails().isEmpty();
-        if (hasOrder) {
-            throw new RuntimeException("Khong the xoa san pham da co trong don hang!");
+        Product product = productRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm id: " + id));
+
+        // Không được xóa nếu đã có trong đơn hàng
+        if (orderDetailRepository.existsByProductId(id)) {
+            throw new RuntimeException("Không thể xóa sản phẩm đã có trong đơn hàng!");
         }
-        p.setDeleted(true);
-        repository.save(p);
+
+        // Soft delete
+        product.setDeleted(true);
+        productRepository.save(product);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PageResponseDTO<ProductDTO> search(ProductSearchDTO c, Pageable pageable) {
-        Page<Product> page = repository.search(
+        Page<Product> page = productRepository.search(
                 c.getName(), c.getMinPrice(), c.getMaxPrice(), c.getInStock(), pageable);
         List<ProductDTO> content = page.getContent()
                 .stream().map(ProductMapper::toDTO).toList();

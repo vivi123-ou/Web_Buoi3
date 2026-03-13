@@ -1,15 +1,14 @@
 package vn.edu.demo_spmvc.repository;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import vn.edu.demo_spmvc.dto.RevenueByDayDTO;
-import vn.edu.demo_spmvc.dto.TopProductDTO;
 import vn.edu.demo_spmvc.entity.Order;
 import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
+
+    List<Order> findByCustomerId(Long customerId);
 
     @Query(value = """
         SELECT DATE_FORMAT(o.order_date, '%Y-%m-%d') AS date,

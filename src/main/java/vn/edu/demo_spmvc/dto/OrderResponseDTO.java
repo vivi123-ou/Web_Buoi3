@@ -1,9 +1,8 @@
 package vn.edu.demo_spmvc.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Data;
-
+import vn.edu.demo_spmvc.enums.OrderStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -14,4 +13,5 @@ public class OrderResponseDTO {
     private String customerName;
     private LocalDateTime orderDate;
     private BigDecimal totalAmount;
+    private OrderStatus status;
 }
