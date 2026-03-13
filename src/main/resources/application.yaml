@@ -10,6 +10,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        physical_naming_strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
 
 jwt:
   secret: ThisIsASecretKeyForJWTThatMustBe32BytesLong!
