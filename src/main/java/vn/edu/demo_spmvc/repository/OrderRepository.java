@@ -11,35 +11,34 @@ import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    @Query("""
-        SELECT new vn.edu.demo_spmvc.dto.RevenueByDayDTO(
-            FUNCTION('DATE_FORMAT', o.orderDate, '%Y-%m-%d'),
-            SUM(o.totalAmount))
-        FROM Order o
-        WHERE FUNCTION('DATE_FORMAT', o.orderDate, '%Y-%m-%d') = :date
-        GROUP BY FUNCTION('DATE_FORMAT', o.orderDate, '%Y-%m-%d')
-    """)
-    List<RevenueByDayDTO> revenueByDay(@Param("date") String date);
+    @Query(value = """
+        SELECT DATE_FORMAT(o.order_date, '%Y-%m-%d') AS date,
+               SUM(o.total_amount) AS totalRevenue
+        FROM tblOrders o
+        WHERE DATE_FORMAT(o.order_date, '%Y-%m-%d') = :date
+        GROUP BY DATE_FORMAT(o.order_date, '%Y-%m-%d')
+    """, nativeQuery = true)
+    List<Object[]> revenueByDayRaw(@Param("date") String date);
 
-    @Query("""
-        SELECT new vn.edu.demo_spmvc.dto.RevenueByDayDTO(
-            FUNCTION('DATE_FORMAT', o.orderDate, '%Y-%m'),
-            SUM(o.totalAmount))
-        FROM Order o
-        WHERE FUNCTION('DATE_FORMAT', o.orderDate, '%Y-%m') = :month
-        GROUP BY FUNCTION('DATE_FORMAT', o.orderDate, '%Y-%m')
-    """)
-    List<RevenueByDayDTO> revenueByMonth(@Param("month") String month);
+    @Query(value = """
+        SELECT DATE_FORMAT(o.order_date, '%Y-%m') AS date,
+               SUM(o.total_amount) AS totalRevenue
+        FROM tblOrders o
+        WHERE DATE_FORMAT(o.order_date, '%Y-%m') = :month
+        GROUP BY DATE_FORMAT(o.order_date, '%Y-%m')
+    """, nativeQuery = true)
+    List<Object[]> revenueByMonthRaw(@Param("month") String month);
 
-    @Query("""
-        SELECT new vn.edu.demo_spmvc.dto.TopProductDTO(
-            d.product.id,
-            d.product.name,
-            SUM(d.quantity),
-            SUM(d.subTotal))
-        FROM OrderDetail d
-        GROUP BY d.product.id, d.product.name
+    @Query(value = """
+        SELECT d.product_id AS productId,
+               p.name AS productName,
+               SUM(d.quantity) AS totalSold,
+               SUM(d.sub_total) AS totalRevenue
+        FROM tblOrderDetails d
+        JOIN tblProducts p ON p.id = d.product_id
+        GROUP BY d.product_id, p.name
         ORDER BY SUM(d.quantity) DESC
-    """)
-    List<TopProductDTO> top5Products(Pageable pageable);
+        LIMIT 5
+    """, nativeQuery = true)
+    List<Object[]> top5ProductsRaw();
 }
